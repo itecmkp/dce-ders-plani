@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#534AB7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DCE Plan">
+<title>DCE Ders Planı — Dijital Vatandaşlık Eğitimi</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#534AB7;--pl:#EEEDFE;--pm:#7F77DD;
+  --t:#0F6E56;--tl:#E1F5EE;
+  --a:#BA7517;--al:#FAEEDA;
+  --c:#993C1D;--cl:#FAECE7;
+  --gl:#F5F4F0;--gm:#666562;--gb:#D3D1C7;
+  --bg:#F5F4F0;--white:#fff;--dark:#1A1A1A
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);min-height:100vh;color:var(--dark)}
+
+/* ── NAV ── */
+.nav-bar{background:var(--p);color:#fff;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 0 rgba(0,0,0,.12)}
+.nav-left .nav-title{font-size:15px;font-weight:500}
+.nav-left .nav-sub{font-size:11px;opacity:.7;margin-top:1px}
+.egitimci-btn{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid rgba(255,255,255,.45);background:transparent;color:rgba(255,255,255,.85);transition:all .15s;white-space:nowrap}
+.egitimci-btn:hover,.egitimci-btn.active{background:#fff;color:var(--p);border-color:#fff}
+
+/* ── SCREENS ── */
+.screen{display:none;padding:1rem;max-width:640px;margin:0 auto;padding-bottom:2rem}
+.screen.active{display:block}
+
+/* ── KARŞILAMA ── */
+.welcome-wrap{padding:2rem 1rem 1rem;text-align:center}
+.welcome-logo{width:64px;height:64px;background:var(--p);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:28px}
+.welcome-logo svg{width:34px;height:34px;fill:#fff}
+.welcome-title{font-size:22px;font-weight:500;color:var(--dark);margin-bottom:.5rem;line-height:1.3}
+.welcome-sub{font-size:15px;color:var(--gm);line-height:1.6;margin-bottom:1.75rem}
+.welcome-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.75rem}
+.meta-card{background:var(--white);border-radius:10px;border:.5px solid var(--gb);padding:.75rem;text-align:left}
+.meta-icon{font-size:18px;margin-bottom:4px}
+.meta-lbl{font-size:11px;color:var(--gm);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.meta-val{font-size:13px;color:var(--dark);margin-top:2px;line-height:1.4}
+.welcome-steps{background:var(--white);border-radius:12px;border:.5px solid var(--gb);padding:1rem 1.25rem;margin-bottom:1.75rem;text-align:left}
+.ws-title{font-size:12px;font-weight:500;color:var(--gm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
+.ws-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:.5px solid var(--gb)}
+.ws-item:last-child{border-bottom:none}
+.ws-num{min-width:22px;height:22px;border-radius:50%;background:var(--pl);color:var(--p);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center}
+.ws-text{font-size:13px;color:var(--dark);line-height:1.4}
+.btn-start{width:100%;padding:14px;background:var(--p);color:#EEEDFE;border:none;border-radius:10px;font-size:16px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-start:hover{background:#3C3489}
+.welcome-footer{margin-top:1.25rem;font-size:11px;color:var(--gm);line-height:1.6}
+
+/* ── FORM ── */
+.progress-card{background:var(--white);border-radius:12px;border:.5px solid var(--gb);padding:1rem 1.25rem;margin-bottom:1rem}
+.progress-bar{display:flex;gap:5px;margin-bottom:8px}
+.prog-step{flex:1;height:4px;border-radius:2px;background:var(--gb);transition:background .3s}
+.prog-step.done{background:var(--p)}.prog-step.active{background:var(--pm)}
+.prog-meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--gm)}
+.timer{font-variant-numeric:tabular-nums;font-weight:500}
+.timer.warn{color:var(--a)}.timer.over{color:var(--c)}
+
+.card{background:var(--white);border-radius:12px;border:.5px solid var(--gb);padding:1.25rem;margin-bottom:1rem}
+.step-num{font-size:11px;font-weight:500;color:var(--p);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.step-title{font-size:18px;font-weight:500;color:var(--dark);margin-bottom:4px}
+.step-hint{font-size:14px;color:var(--gm);line-height:1.55;margin-bottom:1.25rem}
+.field{margin-bottom:1.1rem}
+label{display:block;font-size:13px;font-weight:500;color:var(--gm);margin-bottom:6px}
+input,textarea,select{
+  width:100%;font-size:16px;color:var(--dark);background:var(--white);
+  border:.5px solid #B4B2A9;border-radius:8px;padding:11px 13px;
+  font-family:inherit;transition:border-color .15s;
+  -webkit-appearance:none;appearance:none
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--p);border-width:1.5px}
+textarea{resize:vertical;min-height:88px;line-height:1.6}
+.info-note{font-size:11px;color:var(--gm);margin-top:5px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── BOYUT KARTLARI ── */
+.alan-lbl{font-size:10px;font-weight:500;letter-spacing:.06em;color:var(--gm);text-transform:uppercase;margin:12px 0 6px}
+.boyut-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.boyut-card{border:.5px solid var(--gb);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s;background:var(--white);-webkit-tap-highlight-color:transparent}
+.boyut-card:active{transform:scale(.97)}
+.boyut-card.sel-p{border-color:var(--p);border-width:1.5px;background:var(--pl)}
+.boyut-card.sel-t{border-color:var(--t);border-width:1.5px;background:var(--tl)}
+.boyut-card.sel-a{border-color:var(--a);border-width:1.5px;background:var(--al)}
+.boyut-card.sel-c{border-color:var(--c);border-width:1.5px;background:var(--cl)}
+.bno{font-size:10px;font-weight:500;color:var(--gm);margin-bottom:2px}
+.bad{font-size:12px;font-weight:500;color:var(--dark);line-height:1.3}
+.boyut-card.sel-p .bno{color:var(--p)}.boyut-card.sel-t .bno{color:var(--t)}
+.boyut-card.sel-a .bno{color:var(--a)}.boyut-card.sel-c .bno{color:var(--c)}
+
+/* ── NAV ROW ── */
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;padding-top:1rem;border-top:.5px solid var(--gb)}
+.btn{padding:11px 20px;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;border:.5px solid #B4B2A9;background:var(--white);color:var(--dark);transition:all .15s;-webkit-tap-highlight-color:transparent}
+.btn-p{background:var(--p);color:#EEEDFE;border-color:var(--p)}
+.btn-p:active{background:#3C3489}.btn-p:disabled{opacity:.4;cursor:not-allowed}
+.btn-sm{padding:9px 16px;font-size:14px}
+
+/* ── BAŞARI ── */
+.success-wrap{padding:1rem 0}
+.success-ring{width:60px;height:60px;border-radius:50%;background:var(--tl);border:2px solid var(--t);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem}
+.success-check{width:28px;height:28px;stroke:var(--t);stroke-width:2.5;fill:none}
+.success-title{font-size:20px;font-weight:500;text-align:center;color:var(--dark);margin-bottom:.35rem}
+.success-sub{font-size:14px;color:var(--gm);text-align:center;line-height:1.6;margin-bottom:1.5rem}
+.success-boyut{background:var(--pl);border-radius:10px;padding:.9rem 1rem;margin-bottom:.75rem;border:.5px solid var(--p)}
+.success-lbl{font-size:10px;font-weight:500;color:var(--p);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.success-val{font-size:14px;font-weight:500;color:var(--dark)}
+.sc{background:var(--gl);border-radius:10px;padding:.9rem 1rem;margin-bottom:.75rem;border:.5px solid var(--gb)}
+.sc-lbl{font-size:10px;font-weight:500;color:var(--gm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.sc-val{font-size:14px;color:var(--dark);line-height:1.6}
+.soz-card{background:var(--pl);border-radius:10px;padding:.9rem 1rem;border:1.5px solid var(--pm);margin-bottom:1.25rem}
+.soz-lbl{font-size:10px;font-weight:500;color:var(--p);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.soz-val{font-size:15px;font-weight:500;color:var(--p)}
+.success-note{font-size:13px;color:var(--gm);text-align:center;line-height:1.6;padding:.9rem 1rem;background:var(--white);border-radius:10px;border:.5px solid var(--gb);margin-bottom:1rem}
+.sheets-ok{display:flex;align-items:center;gap:7px;font-size:12px;color:#2E7D32;background:#E8F5E9;border:.5px solid #A5D6A7;border-radius:8px;padding:7px 12px;margin-bottom:1rem}
+.sheets-ok svg{flex-shrink:0}
+
+/* ── PANEL ── */
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.panel-title{font-size:15px;font-weight:500;color:var(--dark)}
+.logout-btn{font-size:12px;color:var(--gm);cursor:pointer;background:none;border:.5px solid var(--gb);padding:5px 12px;border-radius:8px;font-family:inherit}
+.sheets-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:6px 12px;border-radius:8px;background:#E8F5E9;color:#2E7D32;border:.5px solid #A5D6A7;margin-bottom:1rem;cursor:pointer;width:100%;justify-content:center}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.stat-card{background:var(--white);border-radius:10px;padding:.9rem .5rem;text-align:center;border:.5px solid var(--gb)}
+.stat-num{font-size:22px;font-weight:500;color:var(--p)}
+.stat-lbl{font-size:10px;color:var(--gm);margin-top:2px;line-height:1.3}
+.filter-row{display:flex;gap:5px;margin-bottom:1rem;flex-wrap:wrap}
+.filter-chip{font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;border:.5px solid var(--gb);background:var(--white);color:var(--gm);transition:all .15s}
+.filter-chip.active{background:var(--pl);color:var(--p);border-color:var(--pm)}
+.plan-item{background:var(--white);border-radius:10px;padding:1rem;margin-bottom:.75rem;border:.5px solid var(--gb);cursor:pointer;transition:border-color .15s;-webkit-tap-highlight-color:transparent}
+.plan-item:active{border-color:var(--pm)}
+.plan-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.35rem}
+.plan-name{font-size:14px;font-weight:500;color:var(--dark)}
+.plan-meta{font-size:12px;color:var(--gm)}
+.boyut-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500;background:var(--pl);color:var(--p);white-space:nowrap;flex-shrink:0;margin-left:6px}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--gm)}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--p);cursor:pointer;margin-bottom:1rem;background:none;border:none;padding:0;font-family:inherit;font-weight:500}
+.plan-detail{background:var(--white);border-radius:12px;padding:1.25rem;border:.5px solid var(--gb)}
+.dt-sec{margin-bottom:1rem;padding-bottom:1rem;border-bottom:.5px solid var(--gb)}
+.dt-sec:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.dt-lbl{font-size:10px;font-weight:500;color:var(--gm);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.dt-val{font-size:14px;color:var(--dark);line-height:1.6;white-space:pre-wrap}
+
+/* ── LOGIN ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.overlay.hidden{display:none}
+.login-card{background:var(--white);border-radius:16px;padding:2rem 1.5rem;width:100%;max-width:320px;text-align:center}
+.login-icon{width:52px;height:52px;border-radius:50%;background:var(--pl);display:flex;align-items:center;justify-content:center;margin:0 auto .9rem;font-size:22px}
+.login-title{font-size:16px;font-weight:500;color:var(--dark);margin-bottom:4px}
+.login-hint{font-size:13px;color:var(--gm);margin-bottom:1.25rem}
+.login-input{width:100%;font-size:22px;text-align:center;letter-spacing:.3em;padding:12px;border-radius:8px;border:.5px solid var(--gb);background:var(--white);color:var(--dark);font-family:inherit}
+.login-input:focus{outline:none;border-color:var(--p);border-width:1.5px}
+.login-error{font-size:12px;color:var(--c);margin-top:6px;min-height:18px}
+.login-actions{display:flex;gap:8px;margin-top:1rem}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+
+@media(max-width:380px){
+  .boyut-grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .welcome-meta{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Login overlay -->
+<div id="overlay" class="overlay hidden">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">Eğitimci Paneli</div>
+    <div class="login-hint">Erişim şifresini girin</div>
+    <input class="login-input" type="password" id="pw-input" placeholder="••••••" maxlength="20"
+      onkeydown="if(event.key==='Enter')checkPw()">
+    <div class="login-error" id="pw-error"></div>
+    <div class="login-actions">
+      <button class="btn btn-sm" style="flex:1" onclick="closeLogin()">İptal</button>
+      <button class="btn btn-p btn-sm" style="flex:1" onclick="checkPw()">Giriş →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="nav-bar">
+  <div class="nav-left">
+    <div class="nav-title">DCE Ders Planı</div>
+    <div class="nav-sub">Dijital Vatandaşlık Eğitimi</div>
+  </div>
+  <button class="egitimci-btn" id="panel-toggle" onclick="togglePanel()">Eğitimci</button>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Karşılama -->
+<div id="screen-welcome" class="screen active">
+  <div class="welcome-wrap">
+    <div class="welcome-logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" opacity=".3"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-4h2v2h-2zm0-10h2v8h-2z"/></svg>
+    </div>
+    <div class="welcome-title">Dijital Vatandaşlık<br>Eğitimi Ders Planı</div>
+    <div class="welcome-sub">Avrupa Konseyi DCE çerçevesini kendi branşınıza taşıyın.<br>15 dakikada uygulamaya hazır bir aktivite taslağı üretin.</div>
+
+    <div class="welcome-meta">
+      <div class="meta-card">
+        <div class="meta-icon">⏱</div>
+        <div class="meta-lbl">Süre</div>
+        <div class="meta-val">~15 dakika</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">📋</div>
+        <div class="meta-lbl">Çıktı</div>
+        <div class="meta-val">Aktivite taslağı</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">🎯</div>
+        <div class="meta-lbl">Kapsam</div>
+        <div class="meta-val">10 DCE boyutu</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">💾</div>
+        <div class="meta-lbl">Kayıt</div>
+        <div class="meta-val">Otomatik</div>
+      </div>
+    </div>
+
+    <div class="welcome-steps">
+      <div class="ws-title">5 adımda ne yapacaksınız?</div>
+      <div class="ws-item"><div class="ws-num">1</div><div class="ws-text">Branşınızı ve sınıf düzeyinizi girin</div></div>
+      <div class="ws-item"><div class="ws-num">2</div><div class="ws-text">DCE boyutlarından birine uzmanlaşın</div></div>
+      <div class="ws-item"><div class="ws-num">3</div><div class="ws-text">Dersinizdeki bağlantı noktasını belirtin</div></div>
+      <div class="ws-item"><div class="ws-num">4</div><div class="ws-text">Somut bir aktivite tasarlayın</div></div>
+      <div class="ws-item"><div class="ws-num">5</div><div class="ws-text">Değerlendirme göstergesi ve 30 günlük söz</div></div>
+    </div>
+
+    <button class="btn-start" onclick="startForm()">Başla →</button>
+
+    <div class="welcome-footer">
+      MEB – Avrupa Konseyi Dijital Vatandaşlık Eğitimi Projesi<br>
+      dceturkiye.eba.gov.tr · coe.int/digital-citizenship
+    </div>
+  </div>
+</div>
+
+<!-- Form -->
+<div id="screen-form" class="screen"></div>
+
+<!-- Panel -->
+<div id="screen-panel" class="screen"></div>
+
+<script>
+const SHEETS_URL="https://script.google.com/macros/s/AKfycbxsaGwpxX4IgA8h3C3KlZobXTAPo9B3UQmQaE7uxIb1tusLX4VlbyLOjk2rS9Bb4dpq/exec";
+const SHEETS_LINK="https://docs.google.com/spreadsheets/d/1gdXEPuJwopwgIfSnWd5m1JIMl5_H5s-mNAjp8931M5w/edit";
+const PANEL_PW="dce2025";
+
+const BOYUTLAR=[
+  {no:"B1",ad:"Erişim ve Dahil Edicilik",alan:"Online Ortamda Olmak",r:"p"},
+  {no:"B2",ad:"Öğrenme ve Yaratıcılık",alan:"Online Ortamda Olmak",r:"p"},
+  {no:"B3",ad:"Medya ve Bilgi Okuryazarlığı",alan:"Online Ortamda Olmak",r:"t"},
+  {no:"B4",ad:"Etik Değerler ve Empati",alan:"Online Esenlik",r:"t"},
+  {no:"B5",ad:"Sağlık ve Esenlik",alan:"Online Esenlik",r:"a"},
+  {no:"B6",ad:"e-Mevcudiyet ve İletişim",alan:"Online Esenlik",r:"a"},
+  {no:"B7",ad:"Aktif Katılım",alan:"Online Haklarımız",r:"c"},
+  {no:"B8",ad:"Hak ve Sorumluluklar",alan:"Online Haklarımız",r:"c"},
+  {no:"B9",ad:"Özel Yaşam ve Güvenlik",alan:"Online Haklarımız",r:"p"},
+  {no:"B10",ad:"Tüketici Farkındalığı",alan:"Online Haklarımız",r:"t"},
+];
+
+const BRANSLAR={"İlkokul / Sınıf":["Sınıf Öğretmenliği","Okul Öncesi Öğretmenliği"],"Ortaokul":["Türkçe","İlköğretim Matematik","Fen Bilimleri","Sosyal Bilgiler","T.C. İnkılap Tarihi ve Atatürkçülük","Din Kültürü ve Ahlak Bilgisi","Teknoloji ve Tasarım","Bilişim Teknolojileri ve Yazılım","Görsel Sanatlar","Müzik","Beden Eğitimi"],"Yabancı Dil":["İngilizce","Almanca","Fransızca","Arapça"],"Ortaöğretim":["Türk Dili ve Edebiyatı","Matematik","Fizik","Kimya","Biyoloji","Tarih","Coğrafya","Felsefe","Psikoloji","Sosyoloji","Mantık","Din Kültürü ve Ahlak Bilgisi (Ortaöğretim)","İmam-Hatip Lisesi Meslek Dersleri","Sağlık Bilgisi","Sanat Tarihi","Ekonomi","Girişimcilik"],"Mesleki ve Teknik":["Muhasebe ve Finansman","Büro Yönetimi","Pazarlama ve Perakende","Bilişim Teknolojileri (MTOK)","Elektrik-Elektronik Teknolojisi","Makine Teknolojisi","Gıda ve İçecek Hizmetleri","Konaklama ve Seyahat Hizmetleri","Güzellik ve Saç Bakım Hizmetleri","Çocuk Gelişimi ve Eğitimi","Grafik ve Fotoğraf","Sağlık Hizmetleri"],"Özel ve Destek":["Özel Eğitim Öğretmenliği","Rehberlik"]};
+
+const DERSLER={"İlkokul — Zorunlu":["Türkçe","Matematik","Hayat Bilgisi","Beden Eğitimi ve Oyun","Görsel Sanatlar","Müzik","Din Kültürü ve Ahlak Bilgisi","İngilizce","Trafik Güvenliği"],"Ortaokul — Zorunlu":["Türkçe","Matematik","Fen Bilimleri","Sosyal Bilgiler","T.C. İnkılap Tarihi ve Atatürkçülük","Din Kültürü ve Ahlak Bilgisi","İngilizce","Görsel Sanatlar","Müzik","Beden Eğitimi ve Spor","Bilişim Teknolojileri ve Yazılım","Teknoloji ve Tasarım","İnsan Hakları, Vatandaşlık ve Demokrasi","Rehberlik ve Yönlendirme"],"Ortaokul — Seçmeli":["Almanca","Fransızca","Arapça","Medya Okuryazarlığı","Robotik Kodlama","Yapay Zeka Uygulamaları","Düşünme Eğitimi","Hukuk ve Adalet","Okuma Becerileri","Yazarlık ve Yazma Becerileri","Proje Tasarımı ve Uygulamaları","Temel Yaşam Becerileri","Görgü Kuralları ve Nezaket","Dijital Sanatlar"],"Ortaöğretim — Ortak":["Türk Dili ve Edebiyatı","Matematik","Tarih","Coğrafya","Fizik","Kimya","Biyoloji","Felsefe","T.C. İnkılap Tarihi ve Atatürkçülük","Din Kültürü ve Ahlak Bilgisi","Beden Eğitimi ve Spor","Sağlık Bilgisi ve Trafik Kültürü","İngilizce (Birinci Yabancı Dil)"],"Ortaöğretim — Seçmeli":["Psikoloji","Sosyoloji","Mantık","Ekonomi","Girişimcilik","Sanat Tarihi","Osmanlı Türkçesi","Metin Tahlilleri","Bilgi Kuramı","Demokrasi ve İnsan Hakları","Seçmeli Türk Dili ve Edebiyatı","Çağdaş Türk ve Dünya Tarihi","Bilişim Teknolojileri ve Yazılım (lise)","Almanca","Fransızca","Arapça"],"Okul Öncesi":["Okul Öncesi Eğitim (tüm etkinlikler)","Türkçe Dil Etkinlikleri","Matematik Etkinlikleri","Fen Etkinlikleri","Sanat Etkinlikleri","Müzik Etkinlikleri","Hareket Etkinlikleri"]};
+
+const SINIFLAR=["1. Sınıf","2. Sınıf","3. Sınıf","4. Sınıf","5. Sınıf","6. Sınıf","7. Sınıf","8. Sınıf","9. Sınıf","10. Sınıf","11. Sınıf","12. Sınıf"];
+
+const st={ad:"",brans:"",sinif:"",boyut:null,gec:"",ders:"",tema:"",kaz:"",bag:"",aad:"",anas:"",asure:"",cikti:"",mat:"",gos:"",olcme:"",star:"",ssin:"",step:0};
+let planlar=[],fBoyut="",detailId=null,timerIv=null,unlocked=false,formStarted=false;
+let formStart=0;
+
+function e(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function v(id){const el=document.getElementById(id);return el?el.value.trim():''}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function toast(msg,dur=2800){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
+
+function showOnly(name){
+  ['welcome','form','panel'].forEach(n=>{
+    document.getElementById('screen-'+n).classList.toggle('active',n===name);
+  });
+}
+
+function startForm(){
+  formStart=Date.now();
+  showOnly('form');
+  renderStep();
+}
+
+function buildSel(obj,cur,ph){
+  let h=`<option value="">${ph}</option>`;
+  for(const[g,list]of Object.entries(obj)){
+    h+=`<option disabled>── ${g} ──</option>`;
+    for(const item of list)h+=`<option value="${e(item)}"${cur===item?' selected':''}>${e(item)}</option>`;
+  }
+  return h;
+}
+
+// ── Şifre ──
+function togglePanel(){
+  if(unlocked){showOnly('panel');renderPanel();return;}
+  document.getElementById('overlay').classList.remove('hidden');
+  document.getElementById('pw-input').value='';
+  document.getElementById('pw-error').textContent='';
+  setTimeout(()=>document.getElementById('pw-input').focus(),120);
+}
+function closeLogin(){document.getElementById('overlay').classList.add('hidden')}
+function checkPw(){
+  const inp=document.getElementById('pw-input').value;
+  if(inp===PANEL_PW){
+    unlocked=true;
+    document.getElementById('overlay').classList.add('hidden');
+    const btn=document.getElementById('panel-toggle');
+    btn.classList.add('active');btn.textContent='Panel ✓';
+    showOnly('panel');renderPanel();
+  }else{
+    document.getElementById('pw-error').textContent='Şifre yanlış.';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+  }
+}
+function logoutPanel(){
+  unlocked=false;
+  const btn=document.getElementById('panel-toggle');
+  btn.classList.remove('active');btn.textContent='Eğitimci';
+  showOnly('form');
+  toast('Oturum kapatıldı');
+}
+
+// ── Sheets & Storage ──
+async function sendSheets(plan){
+  try{await fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(plan)});return true;}catch(e){return false;}
+}
+function saveLS(plan){try{localStorage.setItem('dce_'+plan.id,JSON.stringify(plan));}catch(e){}}
+function loadLS(){
+  const items=[];
+  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('dce_')){try{items.push(JSON.parse(localStorage.getItem(k)));}catch(e){}}}}catch(e){}
+  return items.sort((a,b)=>b.ts-a.ts);
+}
+function delLS(id){try{localStorage.removeItem('dce_'+id);}catch(e){}}
+
+// ── FORM STEPS ──
+const STEPS=[
+  {num:"1 / 5",title:"Sizi tanıyalım",hint:"Branşınızı ve çalıştığınız sınıf düzeyini girin.",
+   render:()=>`
+    <div class="field"><label>Ad Soyad</label><input type="text" id="f-ad" placeholder="Adınız ve soyadınız" value="${e(st.ad)}" autocomplete="name"></div>
+    <div class="field"><label>Branş</label><select id="f-brans">${buildSel(BRANSLAR,st.brans,'Branşınızı seçin…')}</select><div class="info-note">MEB TTKB Öğretmenlik Alanları (2025)</div></div>
+    <div class="field"><label>Sınıf Düzeyi</label><select id="f-sinif"><option value="">Seçin…</option>${SINIFLAR.map(s=>`<option value="${s}"${st.sinif===s?' selected':''}>${s}</option>`).join('')}</select></div>`,
+   save:()=>{st.ad=v('f-ad');st.brans=v('f-brans');st.sinif=v('f-sinif')},
+   valid:()=>st.ad.trim()&&st.brans&&st.sinif},
+  {num:"2 / 5",title:"DCE Boyutu Seçin",hint:"Branşınızla en güçlü örtüşen 1 boyutu seçin, ardından gerekçenizi yazın.",
+   render:()=>{
+     const g=[{a:"Online Ortamda Olmak",b:BOYUTLAR.slice(0,3)},{a:"Online Esenlik",b:BOYUTLAR.slice(3,6)},{a:"Online Haklarımız",b:BOYUTLAR.slice(6,10)}];
+     return g.map(x=>`<div class="alan-lbl">${x.a}</div><div class="boyut-grid">${x.b.map(b=>`<div class="boyut-card${st.boyut===b.no?' sel-'+b.r:''}" onclick="pickB('${b.no}')"><div class="bno">${b.no}</div><div class="bad">${b.ad}</div></div>`).join('')}</div>`).join('')+
+     `<div class="field" style="margin-top:14px"><label>Bu boyutu neden seçtiniz?</label><textarea id="f-gec" placeholder="Bu boyut dersimde şu şekilde karşıma çıkıyor…">${e(st.gec)}</textarea></div>`;
+   },
+   save:()=>{st.gec=v('f-gec')},
+   valid:()=>st.boyut&&st.gec.trim().length>10},
+  {num:"3 / 5",title:"Ders Bağlantısı",hint:"Seçtiğiniz boyutun hangi derste, hangi öğrenme çıktısıyla örtüştüğünü belirtin.",
+   render:()=>`
+    <div class="two-col">
+      <div class="field"><label>Ders Adı</label><select id="f-ders">${buildSel(DERSLER,st.ders,'Seçin…')}</select><div class="info-note">TTKB HDÇ 2025</div></div>
+      <div class="field"><label>Tema / Ünite</label><input type="text" id="f-tema" placeholder="Örn: Yaşayan Demokrasimiz" value="${e(st.tema)}"></div>
+    </div>
+    <div class="field"><label>Öğrenme Çıktısı / Kazanım</label><input type="text" id="f-kaz" placeholder="Programdaki kod veya ifade  (Örn: SB.6.4.2)" value="${e(st.kaz)}"></div>
+    <div class="field"><label>Bu boyut bu derste nasıl yer alıyor?</label><textarea id="f-bag" placeholder="1-2 cümleyle açıklayın…">${e(st.bag)}</textarea></div>`,
+   save:()=>{st.ders=v('f-ders');st.tema=v('f-tema');st.kaz=v('f-kaz');st.bag=v('f-bag')},
+   valid:()=>st.ders&&st.kaz.trim()&&st.bag.trim().length>10},
+  {num:"4 / 5",title:"Aktivite Tasarımı",hint:"Tek bir somut aktivite yeterli — adım adım anlatın.",
+   render:()=>`
+    <div class="field"><label>Aktivitenin adı</label><input type="text" id="f-aad" placeholder="Kısa ve akılda kalıcı bir ad" value="${e(st.aad)}"></div>
+    <div class="field"><label>Nasıl uygulanır?</label><textarea id="f-anas" style="min-height:110px" placeholder="1. Öğrencilere ……… verin.\n2. ……… yapmalarını isteyin.\n3. Sonuçları ……… paylaşın.">${e(st.anas)}</textarea></div>
+    <div class="two-col">
+      <div class="field"><label>Tahmini süre</label><input type="text" id="f-asure" placeholder="Örn: 20 dakika" value="${e(st.asure)}"></div>
+      <div class="field"><label>Materyal</label><input type="text" id="f-mat" placeholder="Kâğıt, Padlet…" value="${e(st.mat)}"></div>
+    </div>
+    <div class="field"><label>Öğrenci çıktısı</label><input type="text" id="f-cikti" placeholder="Aktivite sonunda öğrenci ne üretir?" value="${e(st.cikti)}"></div>`,
+   save:()=>{st.aad=v('f-aad');st.anas=v('f-anas');st.asure=v('f-asure');st.mat=v('f-mat');st.cikti=v('f-cikti')},
+   valid:()=>st.aad.trim()&&st.anas.trim().length>15&&st.cikti.trim()},
+  {num:"5 / 5",title:"Değerlendirme ve Söz",hint:"Bir gözlemlenebilir gösterge yazın, ardından 30 günlük sözünüzü verin.",
+   render:()=>`
+    <div class="field"><label>Öğrenci ne yapabildiğinde bu boyutu öğrendi diyebilirim?</label><textarea id="f-gos" placeholder="Öğrenci ……… durumunda ……… yapabilir.">${e(st.gos)}</textarea></div>
+    <div class="field"><label>Nasıl ölçeceğim?</label>
+      <select id="f-olcme"><option value="">Seçin…</option>${["Gözlem formu","Akran değerlendirme","Ürün inceleme","Sözlü soru","Kontrol listesi","Diğer"].map(o=>`<option value="${o}"${st.olcme===o?' selected':''}>${o}</option>`).join('')}</select>
+    </div>
+    <div style="background:#F5F4F0;border-radius:10px;padding:1rem;margin-top:.25rem">
+      <div style="font-size:12px;font-weight:500;color:#534AB7;margin-bottom:.85rem">30 Günlük Söz</div>
+      <div class="two-col">
+        <div class="field"><label>Uygulayacağım tarih</label><input type="text" id="f-star" placeholder="Örn: 12 Mayıs 2025" value="${e(st.star)}"></div>
+        <div class="field"><label>Hangi sınıf?</label><select id="f-ssin"><option value="">Seçin…</option>${SINIFLAR.map(s=>`<option value="${s}"${st.ssin===s?' selected':''}>${s}</option>`).join('')}</select></div>
+      </div>
+    </div>`,
+   save:()=>{st.gos=v('f-gos');st.olcme=v('f-olcme');st.star=v('f-star');st.ssin=v('f-ssin')},
+   valid:()=>st.gos.trim().length>10&&st.olcme&&st.star.trim()&&st.ssin},
+];
+
+function pickB(no){
+  st.boyut=no;
+  document.querySelectorAll('.boyut-card').forEach(c=>{
+    const b=BOYUTLAR.find(x=>c.getAttribute('onclick')===`pickB('${x.no}')`);
+    if(b)c.className='boyut-card'+(st.boyut===b.no?' sel-'+b.r:'');
+  });
+  updateNav();
+}
+
+function updateProg(){
+  const pb=document.getElementById('fpb');
+  if(pb)pb.innerHTML=STEPS.map((_,i)=>`<div class="prog-step${i<st.step?' done':i===st.step?' active':''}"></div>`).join('');
+  const pm=document.getElementById('fpm');
+  if(pm)pm.textContent=`Adım ${st.step+1} / ${STEPS.length}`;
+}
+
+function updateNav(){
+  STEPS[st.step].save();
+  const nb=document.getElementById('btn-next');
+  if(nb){nb.disabled=!STEPS[st.step].valid();nb.textContent=st.step===STEPS.length-1?'Kaydet ✓':'Devam →';}
+  const pb=document.getElementById('btn-prev');
+  if(pb)pb.style.display=st.step===0?'none':'inline-flex';
+}
+
+function attachL(){
+  ['f-ad','f-brans','f-sinif','f-gec','f-ders','f-tema','f-kaz','f-bag',
+   'f-aad','f-anas','f-asure','f-mat','f-cikti','f-gos','f-olcme','f-star','f-ssin'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.addEventListener('input',()=>{STEPS[st.step].save();updateNav()});
+           el.addEventListener('change',()=>{STEPS[st.step].save();updateNav()});}
+  });
+}
+
+function renderStep(){
+  const s=STEPS[st.step];
+  const rem=Math.max(0,900-Math.floor((Date.now()-formStart)/1000));
+  const m=Math.floor(rem/60),sec=rem%60;
+  const tc=rem<60?'over':rem<180?'warn':'';
+  document.getElementById('screen-form').innerHTML=`
+    <div class="progress-card">
+      <div class="progress-bar" id="fpb"></div>
+      <div class="prog-meta">
+        <span id="fpm" style="font-weight:500"></span>
+        <span class="timer ${tc}" id="ftimer">⏱ ${m}:${sec.toString().padStart(2,'0')}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="step-num">Adım ${s.num}</div>
+      <div class="step-title">${s.title}</div>
+      <div class="step-hint">${s.hint}</div>
+      ${s.render()}
+      <div class="nav-row">
+        <button class="btn btn-sm" id="btn-prev" onclick="goPrev()" style="display:none">← Geri</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-p btn-sm" id="btn-next" onclick="goNext()">Devam →</button>
+      </div>
+    </div>`;
+  updateProg();attachL();updateNav();startTimer();
+}
+
+function startTimer(){
+  if(timerIv)clearInterval(timerIv);
+  timerIv=setInterval(()=>{
+    const r=Math.max(0,900-Math.floor((Date.now()-formStart)/1000));
+    const d=document.getElementById('ftimer');
+    if(!d){clearInterval(timerIv);return;}
+    d.textContent=`⏱ ${Math.floor(r/60)}:${(r%60).toString().padStart(2,'0')}`;
+    d.className='timer'+(r<60?' over':r<180?' warn':'');
+  },1000);
+}
+
+function goPrev(){if(st.step>0){STEPS[st.step].save();st.step--;renderStep();}}
+async function goNext(){
+  STEPS[st.step].save();
+  if(st.step<STEPS.length-1){st.step++;renderStep();}
+  else await finish();
+}
+
+async function finish(){
+  if(timerIv)clearInterval(timerIv);
+  const bo=BOYUTLAR.find(b=>b.no===st.boyut)||{};
+  const plan={id:uid(),ts:Date.now(),ad:st.ad,brans:st.brans,sinif:st.sinif,
+    boyutNo:st.boyut,boyutAd:bo.ad,boyutAlan:bo.alan,
+    gec:st.gec,ders:st.ders,tema:st.tema,kaz:st.kaz,bag:st.bag,
+    aad:st.aad,anas:st.anas,asure:st.asure,cikti:st.cikti,mat:st.mat,
+    gos:st.gos,olcme:st.olcme,star:st.star,ssin:st.ssin};
+
+  const nb=document.getElementById('btn-next');
+  if(nb){nb.disabled=true;nb.textContent='Kaydediliyor…';}
+  const elapsed=Math.floor((Date.now()-formStart)/1000);
+  await Promise.all([sendSheets(plan),Promise.resolve(saveLS(plan))]);
+  planlar.unshift(plan);
+
+  document.getElementById('screen-form').innerHTML=`
+    <div class="card success-wrap">
+      <div class="success-ring">
+        <svg class="success-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="success-title">Plan kaydedildi!</div>
+      <div class="success-sub">${Math.floor(elapsed/60)} dk ${elapsed%60} sn · Planınız eğitimcinize iletildi.</div>
+
+      <div class="sheets-ok">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#34A853"/><path d="M7 8h10M7 12h10M7 16h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Google Sheets'e başarıyla gönderildi
+      </div>
+
+      <div class="success-boyut">
+        <div class="success-lbl">Seçtiğiniz DCE Boyutu</div>
+        <div class="success-val">${bo.no} — ${bo.ad}</div>
+      </div>
+      <div class="sc">
+        <div class="sc-lbl">Ders · Aktivite</div>
+        <div class="sc-val">${e(plan.ders)} · <strong>${e(plan.aad)}</strong></div>
+      </div>
+      <div class="soz-card">
+        <div class="soz-lbl">30 Günlük Söz</div>
+        <div class="soz-val">${e(plan.star)} · ${e(plan.ssin)}</div>
+      </div>
+      <div class="success-note">
+        Planınız kaydedildi. Atölye sonunda eğitimciniz tüm planları sizinle paylaşacak.<br>
+        Sözünüzü tutmak için takvime not almayı unutmayın!
+      </div>
+      <button class="btn-start" onclick="newPlan()">Yeni Plan Yaz</button>
+    </div>`;
+}
+
+function newPlan(){
+  Object.assign(st,{ad:'',brans:'',sinif:'',boyut:null,gec:'',ders:'',tema:'',kaz:'',bag:'',aad:'',anas:'',asure:'',cikti:'',mat:'',gos:'',olcme:'',star:'',ssin:'',step:0});
+  formStart=Date.now();
+  renderStep();
+}
+
+// ── PANEL ──
+async function renderPanel(){
+  const el=document.getElementById('screen-panel');
+  if(!planlar.length)planlar=loadLS();
+  if(detailId){const p=planlar.find(x=>x.id===detailId);if(p){renderDetail(p,el);return;}}
+  const filtered=fBoyut?planlar.filter(p=>p.boyutNo===fBoyut):planlar;
+  const bc={};planlar.forEach(p=>{bc[p.boyutNo]=(bc[p.boyutNo]||0)+1});
+  const top=Object.entries(bc).sort((a,b)=>b[1]-a[1])[0];
+  const bs=new Set(planlar.map(p=>p.brans));
+
+  el.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">Eğitimci Paneli</div>
+      <button class="logout-btn" onclick="logoutPanel()">Çıkış ×</button>
+    </div>
+    <div class="sheets-badge" onclick="window.open('${SHEETS_LINK}','_blank')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="#34A853"/><path d="M7 8h10M7 12h10M7 16h6" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Google Sheets'te aç / PDF olarak indir →
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num">${planlar.length}</div><div class="stat-lbl">Toplam Plan</div></div>
+      <div class="stat-card"><div class="stat-num">${bs.size}</div><div class="stat-lbl">Farklı Branş</div></div>
+      <div class="stat-card"><div class="stat-num">${top?top[0]:'—'}</div><div class="stat-lbl">En Seçilen Boyut</div></div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-chip${!fBoyut?' active':''}" onclick="setF('')">Tümü</div>
+      ${BOYUTLAR.map(b=>`<div class="filter-chip${fBoyut===b.no?' active':''}" onclick="setF('${b.no}')">${b.no}</div>`).join('')}
+    </div>
+    ${filtered.length===0
+      ?`<div class="empty-state"><div style="font-size:36px;margin-bottom:.75rem">📋</div><div style="font-size:14px;font-weight:500;margin-bottom:4px">${planlar.length?'Bu boyutta plan yok':'Henüz plan yok'}</div><div style="font-size:13px">Katılımcılar ana ekrandan formu doldurabilir</div></div>`
+      :filtered.map(p=>`
+        <div class="plan-item" onclick="openD('${p.id}')">
+          <div class="plan-head">
+            <div class="plan-name">${e(p.ad)}</div>
+            <span class="boyut-badge">${e(p.boyutNo)}</span>
+          </div>
+          <div class="plan-meta">${e(p.brans)} · ${e(p.sinif)} · ${e(p.ders)}</div>
+          <div style="font-size:12px;color:var(--gm);margin-top:4px">${e(p.aad)} · ${e(p.star)}</div>
+        </div>`).join('')
+    }`;
+}
+
+function setF(b){fBoyut=b;renderPanel();}
+function openD(id){detailId=id;renderPanel();}
+function closeD(){detailId=null;renderPanel();}
+
+function renderDetail(p,el){
+  el.innerHTML=`
+    <button class="back-btn" onclick="closeD()">← Tüm planlar</button>
+    <div class="plan-detail">
+      <div class="dt-sec">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem">
+          <div><div style="font-size:16px;font-weight:500">${e(p.ad)}</div>
+          <div style="font-size:12px;color:var(--gm);margin-top:3px">${e(p.brans)} · ${e(p.sinif)}</div></div>
+          <span class="boyut-badge" style="margin-left:8px">${e(p.boyutNo)} — ${e(p.boyutAd)}</span>
+        </div>
+        <div class="dt-lbl">Seçme Gerekçesi</div>
+        <div class="dt-val">${e(p.gec)}</div>
+      </div>
+      <div class="dt-sec">
+        <div class="dt-lbl">Ders Bağlantısı</div>
+        <div class="dt-val"><strong>${e(p.ders)}</strong>${p.tema?' · '+e(p.tema):''}</div>
+        <div class="dt-val" style="color:var(--gm);margin-top:3px">${e(p.kaz)}</div>
+        <div class="dt-val" style="margin-top:6px">${e(p.bag)}</div>
+      </div>
+      <div class="dt-sec">
+        <div class="dt-lbl">Aktivite — ${e(p.aad)}</div>
+        <div class="dt-val">${e(p.anas)}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+          <div><div class="dt-lbl">Süre</div><div class="dt-val">${e(p.asure)}</div></div>
+          <div><div class="dt-lbl">Materyal</div><div class="dt-val">${e(p.mat)}</div></div>
+          <div style="grid-column:1/-1"><div class="dt-lbl">Öğrenci Çıktısı</div><div class="dt-val">${e(p.cikti)}</div></div>
+        </div>
+      </div>
+      <div class="dt-sec">
+        <div class="dt-lbl">Değerlendirme</div>
+        <div class="dt-val">${e(p.gos)}</div>
+        <div class="dt-val" style="color:var(--gm);margin-top:3px">${e(p.olcme)}</div>
+      </div>
+      <div class="dt-sec" style="background:var(--pl);border-radius:8px;padding:.9rem">
+        <div class="dt-lbl" style="color:var(--p)">30 Günlük Söz</div>
+        <div class="dt-val" style="font-weight:500;color:var(--p)">${e(p.star)} · ${e(p.ssin)}</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:1rem">
+        <button class="btn btn-sm" style="flex:1" onclick="window.open('${SHEETS_LINK}','_blank')">Sheets →</button>
+        <button class="btn btn-sm" style="color:#c00;border-color:#fcc;flex:1" onclick="delPlan('${p.id}')">Sil</button>
+      </div>
+    </div>`;
+}
+
+function delPlan(id){
+  if(confirm('Bu planı silmek istiyor musunuz?')){
+    delLS(id);planlar=planlar.filter(p=>p.id!==id);
+    detailId=null;renderPanel();toast('Plan silindi');
+  }
+}
+</script>
+</body>
+</html>
