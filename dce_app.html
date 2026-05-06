@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="version" content="v18-2026-04-30">
+<meta name="version" content="v19-2026-05-05">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#534AB7">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -469,6 +469,15 @@ const st={ad:"",brans:"",sinif:"",il:"",okul:"",oturum:"",oturumAd:"",boyut:null
 let planlar=[], fBoyut="", detailId=null, unlocked=false, formStart=0, currentPlan=null;
 
 planlar=loadLS();
+// Taslak kontrolü — sayfa yüklendikten sonra
+window.addEventListener("DOMContentLoaded",()=>{
+  setTimeout(()=>{
+    // Sadece karşılama ekranındaysa sor
+    if(document.getElementById("screen-welcome")?.classList.contains("active")){
+      showDraftPrompt();
+    }
+  },500);
+});
 // ── URL'den OTURUM KODU ──
 (async()=>{
   const params=new URLSearchParams(location.search);
@@ -654,6 +663,9 @@ async function sendSheets(plan){
     const payload={
       ts: plan.ts,
       ad: plan.ad,
+      il: plan.il || "",
+      okul: plan.okul || "",
+      oturum: plan.oturum || "genel",
       brans: plan.brans,
       sinif: plan.sinif,
       boyutNo: plan.boyutNo,
@@ -729,7 +741,7 @@ function delLS(id){
 
 // Boyut seçimi — data-no ile güvenli
 function pickB(no){
-  st.boyut=no;
+  st.boyut=no;saveDraft();
   document.querySelectorAll(".boyut-card").forEach(c=>{
     const cno=c.dataset.no;
     if(!cno)return;
@@ -809,27 +821,46 @@ const STEPS=[
    save:()=>{st.gec=v("f-gec")},
    valid:()=>st.boyut&&st.gec.trim().length>10},
 
-  {num:"3 / 5",title:"Ders Bağlantısı",hint:"Seçtiğiniz boyutun hangi derste, hangi öğrenme çıktısıyla örtüştüğünü belirtin.",
-   render:()=>`
+  {num:"3 / 5",title:"Ders Bağlantısı",hint:"Branş ve boyutunuza özel hazır seçenekler — istediğinizi seçin veya kendi yazın.",
+   render:()=>{
+     // TYMM'den o branş + boyut için liste
+     const tymmVeri=(typeof TYMM_DATA!=="undefined"&&TYMM_DATA[st.boyut]?.branslar?.[st.brans])||{};
+     const tymmKazanimlar=tymmVeri.kazanimlar||[];
+     const tymmKavramlar=tymmVeri.kavramsal||[];
+
+     return `
     <div class="two-col">
       <div class="field">
         <label for="f-ders">Ders Adı</label>
         <select id="f-ders">${buildSel(DERSLER,st.ders,"Seçin…")}</select>
-        <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap"><button onclick="openTymm()" class="tymm-btn" aria-label="TYMM öğrenme çıktılarını gör">📚 DCE ile örtüşen çıktılar</button><a href="https://tymm.meb.gov.tr" target="_blank" rel="noopener noreferrer" class="tymm-btn">↗ tymm.meb.gov.tr</a></div>
+        <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap"><button onclick="openTymm()" class="tymm-btn" aria-label="TYMM öğrenme çıktılarını gör">📚 Tüm DCE çıktıları</button><a href="https://tymm.meb.gov.tr" target="_blank" rel="noopener noreferrer" class="tymm-btn">↗ tymm.meb.gov.tr</a></div>
       </div>
       <div class="field">
         <label for="f-tema">Tema / Ünite</label>
+        ${tymmKavramlar.length?`
+        <select id="f-tema-sel" onchange="onTemaSelect(this.value)" style="margin-bottom:6px;font-size:13px">
+          <option value="">— ${e(st.boyut)} ile ilgili kavramlar —</option>
+          ${tymmKavramlar.map(k=>`<option value="${e(k)}"${st.tema===k?" selected":""}>${e(k)}</option>`).join("")}
+          <option value="__custom__">Diğer (kendim yazacağım)</option>
+        </select>`:""}
         <input type="text" id="f-tema" placeholder="Örn: Yaşayan Demokrasimiz" value="${e(st.tema)}">
       </div>
     </div>
     <div class="field">
       <label for="f-kaz">Öğrenme Çıktısı / Kazanım</label>
+      ${tymmKazanimlar.length?`
+      <select id="f-kaz-sel" onchange="onKazanimSelect(this.value)" style="margin-bottom:6px;font-size:13px">
+        <option value="">— ${e(st.brans)} için ${e(st.boyut)} kazanımları —</option>
+        ${tymmKazanimlar.map(k=>`<option value="${e(k)}"${st.kaz===k?" selected":""} title="${e(k)}">${e(k.length>90?k.slice(0,89)+"…":k)}</option>`).join("")}
+        <option value="__custom__">Diğer (kendim yazacağım)</option>
+      </select>`:`<div style="font-size:11px;color:var(--gm);margin-bottom:5px">Bu branş + boyut için hazır kazanım yok, lütfen kendi yazınız.</div>`}
       <input type="text" id="f-kaz" placeholder="Programdaki kod veya ifade (Örn: SB.6.4.2)" value="${e(st.kaz)}">
     </div>
     <div class="field">
       <label for="f-bag">Bu boyut bu derste nasıl yer alıyor?</label>
       <textarea id="f-bag" placeholder="1-2 cümleyle açıklayın…">${e(st.bag)}</textarea>
-    </div>`,
+    </div>`;
+   },
    save:()=>{st.ders=v("f-ders");st.tema=v("f-tema");st.kaz=v("f-kaz");st.bag=v("f-bag")},
    valid:()=>st.ders&&st.kaz.trim()&&st.bag.trim().length>10},
 
@@ -879,7 +910,9 @@ const STEPS=[
       <div class="two-col">
         <div class="field">
           <label for="f-star">Uygulayacağım tarih</label>
-          <input type="date" id="f-star" value="${e(st.star)}" min="2026-04-30" max="2026-12-31">
+          <input type="date" id="f-star" value="${e(st.star)}"
+            min="${(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().split("T")[0];})()}"
+            max="${(()=>{const d=new Date();d.setMonth(d.getMonth()+6);return d.toISOString().split("T")[0];})()}">
         </div>
         <div class="field">
           <label for="f-ssin">Hangi sınıf?</label>
@@ -912,8 +945,8 @@ function attachL(){
    "f-aad","f-anas","f-asure","f-mat","f-cikti","f-gos","f-olcme","f-star","f-ssin"].forEach(id=>{
     const el=document.getElementById(id);
     if(el){
-      el.addEventListener("input",()=>{STEPS[st.step].save();updateNav()});
-      el.addEventListener("change",()=>{STEPS[st.step].save();updateNav()});
+      el.addEventListener("input",()=>{STEPS[st.step].save();updateNav();saveDraft();});
+      el.addEventListener("change",()=>{STEPS[st.step].save();updateNav();saveDraft();});
     }
   });
 }
@@ -991,6 +1024,7 @@ async function finish(){
   saveLS(plan);
   planlar.unshift(plan);
   currentPlan=plan;
+  clearDraft();
   const [sheetsOk, supaOk] = await Promise.all([sendSheets(plan), sendSupabase(plan)]);
   if(supaOk){plan._synced=true;saveLS(plan);}
   // Sheets no-cors için her zaman true döner; sadece Supabase güvenilir göstergedir
@@ -1183,6 +1217,33 @@ function delPlan(id){
     deleteSupabase(id);
     planlar=planlar.filter(p=>p.id!==id);
     detailId=null;renderPanel();toast("Plan silindi");
+  }
+}
+
+
+// ── ADIM 3 DROPDOWN HANDLERS ──
+function onTemaSelect(val){
+  const inp=document.getElementById("f-tema");
+  if(!inp)return;
+  if(val==="__custom__"){
+    inp.value="";
+    inp.focus();
+  }else if(val){
+    inp.value=val;
+    st.tema=val;
+    updateNav();
+  }
+}
+function onKazanimSelect(val){
+  const inp=document.getElementById("f-kaz");
+  if(!inp)return;
+  if(val==="__custom__"){
+    inp.value="";
+    inp.focus();
+  }else if(val){
+    inp.value=val;
+    st.kaz=val;
+    updateNav();
   }
 }
 
@@ -1386,6 +1447,91 @@ function buildPdfHtml(plan,bo,tarih){
 </div>`;
 }
 
+
+
+// ── FORM TASLAK KORUMASI ──
+const DRAFT_KEY="dce_draft_form";
+
+function saveDraft(){
+  // Form ekranındayken her değişiklikte taslağı kaydet
+  if(!document.getElementById("screen-form")?.classList.contains("active"))return;
+  try{
+    const draft={
+      ad:st.ad,brans:st.brans,sinif:st.sinif,il:st.il,okul:st.okul,
+      oturum:st.oturum,oturumAd:st.oturumAd,
+      boyut:st.boyut,gec:st.gec,
+      ders:st.ders,tema:st.tema,kaz:st.kaz,bag:st.bag,
+      aad:st.aad,anas:st.anas,asure:st.asure,mat:st.mat,cikti:st.cikti,
+      gos:st.gos,olcme:st.olcme,star:st.star,ssin:st.ssin,
+      step:st.step,
+      _ts:Date.now()
+    };
+    localStorage.setItem(DRAFT_KEY,JSON.stringify(draft));
+  }catch(e){}
+}
+
+function loadDraft(){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY);
+    if(!raw)return null;
+    const d=JSON.parse(raw);
+    // 24 saatten eskiyse sil
+    if(!d._ts||Date.now()-d._ts>86400000){
+      clearDraft();
+      return null;
+    }
+    return d;
+  }catch(e){return null;}
+}
+
+function clearDraft(){
+  try{localStorage.removeItem(DRAFT_KEY);}catch(e){}
+}
+
+function hasMeaningfulDraft(d){
+  if(!d)return false;
+  // En az ad veya boyut girilmişse anlamlı sayılır
+  return (d.ad&&d.ad.trim().length>2)||d.boyut||d.gec;
+}
+
+function restoreDraft(){
+  const d=loadDraft();
+  if(!d||!hasMeaningfulDraft(d))return false;
+  Object.assign(st,d);
+  return true;
+}
+
+function showDraftPrompt(){
+  const d=loadDraft();
+  if(!d||!hasMeaningfulDraft(d))return;
+
+  const html=`<div id="draft-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:var(--white);border-radius:14px;max-width:420px;width:100%;padding:1.5rem;box-shadow:0 4px 30px rgba(0,0,0,.2)">
+      <div style="font-size:32px;margin-bottom:.5rem">📝</div>
+      <h3 style="font-size:17px;font-weight:500;color:var(--dark);margin-bottom:.5rem">Yarım kalan formunuz var</h3>
+      <p style="font-size:14px;color:var(--gm);line-height:1.5;margin-bottom:1.25rem">Önceki form bilgileriniz tarayıcınızda korundu. Kaldığınız yerden devam etmek ister misiniz?</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="continueDraft()" class="btn btn-p btn-sm" style="flex:1;min-width:140px">Devam Et</button>
+        <button onclick="discardDraft()" class="btn btn-sm" style="flex:1;min-width:140px;background:var(--gl);color:var(--gm)">Yeni Başla</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML("beforeend",html);
+}
+
+function continueDraft(){
+  if(restoreDraft()){
+    document.getElementById("draft-modal")?.remove();
+    showOnly("form");
+    renderStep();
+    toast("Form bilgileriniz geri yüklendi");
+  }
+}
+
+function discardDraft(){
+  clearDraft();
+  document.getElementById("draft-modal")?.remove();
+}
 
 // ── HATA İZLEME ──
 window.addEventListener("error",ev=>{
